@@ -1,0 +1,54 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+*.egg-link
+.installed.cfg
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# PyCharm / JetBrains IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Pytest
+.pytest_cache/
+.cache/
+*.log
+
+# Distribution / packaging
+*.tar.gz
+*.zip
+
+# Environment variables
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# SQLAlchemy / Alembic
+*.db
+*.sqlite3
