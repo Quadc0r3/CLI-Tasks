@@ -5,8 +5,8 @@ Validiert alle Nutzereingaben vor der Weitergabe an task_service.
 
 from __future__ import annotations
 
-from models import Priority
 import render
+from models import Priority
 
 _PRIORITY_MAP: dict[str, Priority] = {
     "high": Priority.HIGH,
@@ -45,10 +45,19 @@ def _ask_priority() -> Priority:
         render.error(f"Ungültige Priorität '{raw}'. Erlaubt: {_PRIORITY_HINT}")
 
 
+def _ask_info() -> tuple[str, str | None, Priority]:
+    title = _ask_title()
+    description = _ask_description()
+    priority = _ask_priority()
+    return title, description, priority
+
+
 def run_create_wizard() -> tuple[str, str | None, Priority]:
     """Interaktiver Wizard zum Erstellen eines Tasks. Gibt (title, description, priority) zurück."""
     print("\n  Neuen Task erstellen (* = Pflichtfeld)\n")
-    title       = _ask_title()
-    description = _ask_description()
-    priority    = _ask_priority()
-    return title, description, priority
+    return _ask_info()
+
+
+def run_edit_wizard() -> tuple[str, str | None, Priority]:
+    print("\n Task bearbeiten\n")
+    return _ask_info()
