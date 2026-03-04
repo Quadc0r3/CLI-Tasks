@@ -21,6 +21,14 @@ class Status(Enum):
     DONE        = "abgeschlossen"
 
 
+# Erlaubte Statusübergänge gemäß Datenmodell (Task 6)
+ALLOWED_TRANSITIONS: dict[Status, set[Status]] = {
+    Status.OPEN: {Status.IN_PROGRESS, Status.DONE},
+    Status.IN_PROGRESS: {Status.DONE},
+    Status.DONE: {Status.OPEN},
+}
+
+
 @dataclass
 class Task:
     id:          int
