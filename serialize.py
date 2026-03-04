@@ -11,83 +11,56 @@ import os
 import shutil
 from pathlib import Path
 
-from models import Priority, Status, Task
+from models import Task
+from task_tool import VERSION
 
-_DEFAULT_DIR = Path.home() / ".tasktool"
-_DATA_DIR    = Path(os.environ.get("TASKTOOL_DATA_DIR", _DEFAULT_DIR))
-TASKS_FILE   = _DATA_DIR / "tasks.json"
-_BACKUP_FILE = _DATA_DIR / "tasks.json.bak"
-_TEMP_FILE   = _DATA_DIR / "tasks.json.tmp"
+_TASKS_FILE = "tasks_.json"
+_DEFAULT_FOLDER = ".tasktool"
+_DEFAULT_PATH = Path.home() / _DEFAULT_FOLDER
+_DEFAULT_FILE_PATH = _DEFAULT_PATH / _TASKS_FILE
+_DEFAULT_BACKUP_PATH = _DEFAULT_PATH / f"{_TASKS_FILE}.bak"
+_DEFAULT_TEMP_PATH = _DEFAULT_PATH / f"{_TASKS_FILE}.tmp"
 
-_EMPTY_STORE: dict = {"meta": {"version": "1.0", "last_id": 0}, "tasks": []}
-
-
-def _ensure_dir() -> None:
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def _task_to_dict(task: Task) -> dict:
-    return {
-        "id":          task.id,
-        "title":       task.title,
-        "description": task.description,
-        "priority":    task.priority.value,
-        "status":      task.status.value,
-        "created_at":  task.created_at,
-        "updated_at":  task.updated_at,
-        "done_at":     task.done_at,
-        "tags":        task.tags,
-    }
-
-
-def _dict_to_task(data: dict) -> Task:
-    return Task(
-        id=          data["id"],
-        title=       data["title"],
-        description= data.get("description"),
-        priority=    Priority(data["priority"]),
-        status=      Status(data["status"]),
-        created_at=  data["created_at"],
-        updated_at=  data.get("updated_at"),
-        done_at=     data.get("done_at"),
-        tags=        data.get("tags", []),
-    )
-
+_EMPTY_TASK: dict = {"meta":
+                         {"version": VERSION,
+                          "last_id": 0,
+                          },
+                     "tasks": []}
 
 def read() -> tuple[list[Task], dict]:
-    """Lädt tasks.json. Gibt (tasks, meta) zurück."""
-    _ensure_dir()
+    _path_exists()
 
-    if not TASKS_FILE.exists():
-        return [], dict(_EMPTY_STORE["meta"])
+    if not _DEFAULT_FILE_PATH.exists():
+        return _EMPTY_TASK["tasks"], _EMPTY_TASK["meta"]
 
-    with open(TASKS_FILE, encoding="utf-8") as f:
+    with open(_DEFAULT_FILE_PATH, "r") as f:
         try:
-            store = json.load(f)
-        except json.JSONDecodeError:
-            raise ValueError(
-                f"Datei konnte nicht geladen werden – Format ungültig.\n"
-                f"Backup verfügbar unter: {_BACKUP_FILE}"
-            )
+            json_data = json.load(f)
+        except json.JSONDecodeError as exc:
+            print(f"Fehler beim Laden der Datei: {exc}")
+            print(f"Verwende {_DEFAULT_BACKUP_PATH} als Backup.")
+            return _EMPTY_TASK["tasks"], _EMPTY_TASK["meta"]
 
-    tasks = [_dict_to_task(t) for t in store.get("tasks", [])]
-    meta  = store.get("meta", dict(_EMPTY_STORE["meta"]))
+    tasks = [Task.from_dict(t) for t in json_data.get("tasks", [])]
+    meta = json_data.get("meta", _EMPTY_TASK["meta"])
+
     return tasks, meta
 
 
+def _path_exists():
+    if not _DEFAULT_PATH.exists():
+        _DEFAULT_PATH.mkdir(parents=True)
+
+
 def write(tasks: list[Task], meta: dict) -> None:
-    """Schreibt tasks atomar in tasks.json; erstellt vorher ein Backup."""
-    _ensure_dir()
+    _path_exists()
 
-    if TASKS_FILE.exists():
-        shutil.copy2(TASKS_FILE, _BACKUP_FILE)
+    if _DEFAULT_FILE_PATH.exists():
+        shutil.copy(_DEFAULT_FILE_PATH, _DEFAULT_BACKUP_PATH)
 
-    store = {
-        "meta":  meta,
-        "tasks": [_task_to_dict(t) for t in tasks],
-    }
+    json_data = {"meta": meta, "tasks": [t.to_dict() for t in tasks]}
 
-    with open(_TEMP_FILE, "w", encoding="utf-8") as f:
-        json.dump(store, f, ensure_ascii=False, indent=2)
+    with open(_DEFAULT_TEMP_PATH, "w") as f:
+        json.dump(json_data, f, indent=2)
 
-    os.replace(_TEMP_FILE, TASKS_FILE)
+    os.replace(_DEFAULT_TEMP_PATH, _DEFAULT_FILE_PATH)

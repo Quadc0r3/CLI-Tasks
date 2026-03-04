@@ -5,7 +5,7 @@ Entspricht Task 6 (Datenmodell) des Projekts.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 
@@ -40,3 +40,16 @@ class Task:
     updated_at:  str | None = None
     done_at:     str | None = None
     tags:        list[str]  = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        data = asdict(self)
+        data["priority"] = self.priority.value
+        data["status"] = self.status.value
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Task:
+        d = data.copy()
+        d["priority"] = Priority(d["priority"])
+        d["status"] = Status(d["status"])
+        return cls(**d)
