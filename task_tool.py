@@ -11,9 +11,9 @@ import sys
 import input_handler
 import render
 import task_service
-from models import Status, Priority, Task
+from models import Priority, Status, Task
 
-VERSION = "0.1.13"
+VERSION = "0.1.0"
 
 
 def _add_id_arg(parser: argparse.ArgumentParser, help_text: str) -> None:
@@ -42,13 +42,22 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_id_arg(sub.add_parser("reopen", help="Setze Task auf 'offen'."), "ID des Tasks.")
 
     list_parser = sub.add_parser("list", help="Liste alle Tasks.")
-    list_parser.add_argument("--all", action="store_true", help="Zeige auch abgeschlossene Tasks.")
-    list_parser.add_argument("--status", type=input_handler.parse_status, choices=list(Status),
+    list_parser.add_argument("--all", action="store_true",
+                             help="Zeige auch abgeschlossene Tasks.")
+    list_parser.add_argument("--status", type=input_handler.parse_status,
+                             choices=list(Status),
                              help="Filtere nach Status (open, in_progress, done).")
-    list_parser.add_argument("--priority", type=input_handler.parse_priority, choices=list(Priority),
+    list_parser.add_argument("--priority", type=input_handler.parse_priority,
+                             choices=list(Priority),
                              help="Filtere nach Priority (high, mid, low).")
-    list_parser.add_argument("--sort", choices=["id", "title", "status", "priority"], help="Sortiere nach.")
-    # list_parser.add_argument("--search", help="Suche nach Titel, Beschreibung oder Tags.")
+    list_parser.add_argument("--sort", choices=["id", "title", "status", "priority"],
+                             help="Sortiere nach.")
+
+    delete_parser = sub.add_parser("delete", help="Lösche einen oder mehrere Tasks.")
+    delete_group = delete_parser.add_mutually_exclusive_group(required=True)
+    delete_group.add_argument("id", type=int, nargs="?", help="ID des zu löschenden Tasks.")
+    delete_group.add_argument("--all", action="store_true", help="Lösche alle Tasks.")
+    delete_group.add_argument("--done", action="store_true", help="Lösche alle erledigten Tasks.")
 
     return parser
 
@@ -84,11 +93,7 @@ def _cmd_set_status(task_id: int, target: Status) -> None:
 
 def _cmd_list(args) -> None:
     tasks = task_service.get_all_tasks()
-    if tasks is None:
-        render.error("Keine Tasks gefunden.")
-        return
 
-    # Task-Filterung
     if not args.all:
         tasks = [t for t in tasks if t.status != Status.DONE]
     if args.status:
@@ -96,10 +101,50 @@ def _cmd_list(args) -> None:
     if args.priority:
         tasks = [t for t in tasks if t.priority == args.priority]
 
-    # Task-Sortierung
-    _sort(tasks, args.sort or "id")
-
+    tasks = _sort(tasks, args.sort or "id")
     render.show_tasks(tasks)
+
+
+def _cmd_delete(args) -> None:
+    if args.all:
+        count = task_service.get_all_tasks()
+        if not count:
+            render.info("Keine Tasks vorhanden.")
+            return
+        render.info(f"  {len(count)} Task(s) werden gelöscht.")
+        if not input_handler.confirm_delete("Alle Tasks unwiderruflich löschen?"):
+            render.info("Abgebrochen.")
+            return
+        deleted = task_service.delete_all()
+        render.tasks_deleted(deleted)
+
+    elif args.done:
+        done_tasks = [t for t in task_service.get_all_tasks()
+                      if t.status is Status.DONE]
+        if not done_tasks:
+            render.info("Keine erledigten Tasks vorhanden.")
+            return
+        render.info(f"  {len(done_tasks)} erledigte(r) Task(s) werden gelöscht.")
+        if not input_handler.confirm_delete("Alle erledigten Tasks löschen?"):
+            render.info("Abgebrochen.")
+            return
+        deleted = task_service.delete_done()
+        render.tasks_deleted(deleted)
+
+    else:
+        task = task_service.get_task(args.id)
+        if task is None:
+            render.error(f"Task #{args.id} nicht gefunden.")
+            return
+        render.show_task(task)
+        if not input_handler.confirm_delete(f"Task #{args.id} unwiderruflich löschen?"):
+            render.info("Abgebrochen.")
+            return
+        try:
+            deleted = task_service.delete(args.id)
+            render.task_deleted(deleted)
+        except ValueError as exc:
+            render.error(str(exc))
 
 
 def _sort(tasks: list[Task], sort_by: str) -> list[Task]:
@@ -108,6 +153,7 @@ def _sort(tasks: list[Task], sort_by: str) -> list[Task]:
         key=lambda t: getattr(t, sort_by),
         reverse=sort_by in ("id", "priority", "title", "status"),
     )
+
 
 def main() -> None:
     parser = _build_parser()
@@ -125,6 +171,7 @@ def main() -> None:
         "done": lambda: _cmd_set_status(args.id, Status.DONE),
         "reopen": lambda: _cmd_set_status(args.id, Status.OPEN),
         "list": lambda: _cmd_list(args),
+        "delete": lambda: _cmd_delete(args),
     }
 
     command_function = switch.get(args.command, parser.print_help)

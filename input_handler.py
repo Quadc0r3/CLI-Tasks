@@ -69,8 +69,14 @@ def run_create_wizard() -> tuple[str, str | None, Priority]:
 
 
 def run_edit_wizard() -> tuple[str, str | None, Priority]:
-    print("\n Task bearbeiten\n")
+    print("\n  Task bearbeiten\n")
     return _ask_info()
+
+
+def confirm_delete(prompt: str) -> bool:
+    """Sicherheitsabfrage vor dem Löschen. Gibt True zurück wenn Nutzer mit 'j' bestätigt."""
+    answer = input(f"\n  {prompt} [j/N]: ").strip().lower()
+    return answer == "j"
 
 
 def parse_status(status: str) -> Status:

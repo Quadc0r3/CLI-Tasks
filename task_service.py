@@ -80,3 +80,33 @@ def set_status(task_id: int, target: Status) -> Task:
 
     serialize.write(tasks, meta)
     return task
+
+
+def delete(task_id: int) -> Task:
+    """Löscht einen Task anhand der ID. Gibt den gelöschten Task zurück."""
+    tasks, meta = serialize.read()
+    task = next((t for t in tasks if t.id == task_id), None)
+
+    if task is None:
+        raise ValueError(f"Task #{task_id} nicht gefunden.")
+
+    tasks.remove(task)
+    serialize.write(tasks, meta)
+    return task
+
+
+def delete_done() -> int:
+    """Löscht alle Tasks mit Status DONE. Gibt Anzahl gelöschter Tasks zurück."""
+    tasks, meta = serialize.read()
+    remaining = [t for t in tasks if t.status is not Status.DONE]
+    count = len(tasks) - len(remaining)
+    serialize.write(remaining, meta)
+    return count
+
+
+def delete_all() -> int:
+    """Löscht alle Tasks. Gibt Anzahl gelöschter Tasks zurück."""
+    tasks, meta = serialize.read()
+    count = len(tasks)
+    serialize.write([], meta)
+    return count

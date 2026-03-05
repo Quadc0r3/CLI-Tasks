@@ -50,6 +50,17 @@ def task_status_changed(task: Task) -> None:
     show_task(task)
 
 
+def task_deleted(task: Task) -> None:
+    """Bestätigungsausgabe nach erfolgreichem Löschen eines einzelnen Tasks."""
+    print(f"\n{_BOLD}{_RED}✓ Task #{task.id} gelöscht:{_RESET} {task.title}\n")
+
+
+def tasks_deleted(count: int) -> None:
+    """Bestätigungsausgabe nach erfolgreichem Löschen mehrerer Tasks."""
+    noun = "Task" if count == 1 else "Tasks"
+    print(f"\n{_BOLD}{_RED}✓ {count} {noun} gelöscht.{_RESET}\n")
+
+
 def show_tasks(tasks: list[Task]) -> None:
     """Ausgabe aller Tasks."""
     for task in tasks:
