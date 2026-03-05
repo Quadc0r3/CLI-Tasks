@@ -6,7 +6,10 @@ Verwaltet das CLI-Routing via argparse und orchestriert die Module.
 from __future__ import annotations
 
 import argparse
+import logging
+import os
 import sys
+from pathlib import Path
 
 import input_handler
 import render
@@ -14,6 +17,34 @@ import task_service
 from models import Priority, Status, Task
 
 VERSION = "0.1.0"
+
+
+def _load_env() -> None:
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, _, value = line.partition("=")
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key.strip(), value)
+
+
+def _setup_logging() -> None:
+    level_name = os.environ.get("TASKTOOL_LOG", "WARNING").upper()
+    level = getattr(logging, level_name, logging.WARNING)
+    log_file = os.environ.get("TASKTOOL_LOG_FILE")
+    if log_file:
+        log_file = Path(log_file).expanduser()
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        filename=log_file,
+        filemode="a",
+    )
 
 
 def _add_id_arg(parser: argparse.ArgumentParser, help_text: str) -> None:
@@ -156,6 +187,8 @@ def _sort(tasks: list[Task], sort_by: str) -> list[Task]:
 
 
 def main() -> None:
+    _load_env()
+    _setup_logging()
     parser = _build_parser()
 
     if len(sys.argv) == 1:
