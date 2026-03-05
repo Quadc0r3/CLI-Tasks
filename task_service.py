@@ -56,6 +56,11 @@ def get_task(task_id: int) -> Task | None:
     return next((t for t in tasks if t.id == task_id), None)
 
 
+def get_all_tasks() -> list[Task]:
+    tasks, _ = serialize.read()
+    return tasks
+
+
 def set_status(task_id: int, target: Status) -> Task:
     """Setzt den Status eines Tasks – nur erlaubte Übergänge gemäß ALLOWED_TRANSITIONS."""
     tasks, meta = serialize.read()

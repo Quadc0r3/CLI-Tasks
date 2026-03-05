@@ -5,8 +5,10 @@ Validiert alle Nutzereingaben vor der Weitergabe an task_service.
 
 from __future__ import annotations
 
+import argparse
+
 import render
-from models import Priority
+from models import Priority, Status
 
 _PRIORITY_MAP: dict[str, Priority] = {
     "high": Priority.HIGH,
@@ -14,6 +16,14 @@ _PRIORITY_MAP: dict[str, Priority] = {
     "low":  Priority.LOW,
 }
 _PRIORITY_HINT = "high / mid / low"
+
+_STATUS_MAP: dict[str, Status] = {
+    "open": Status.OPEN,
+    "inprog": Status.IN_PROGRESS,
+    "done": Status.DONE,
+    "reopen": Status.OPEN,
+    "in_progress": Status.IN_PROGRESS,
+}
 
 
 def _prompt(label: str, required: bool = True, default: str = "") -> str:
@@ -61,3 +71,19 @@ def run_create_wizard() -> tuple[str, str | None, Priority]:
 def run_edit_wizard() -> tuple[str, str | None, Priority]:
     print("\n Task bearbeiten\n")
     return _ask_info()
+
+
+def parse_status(status: str) -> Status:
+    try:
+        return _STATUS_MAP[status.lower()]
+    except KeyError:
+        render.error(f"Ungültiger Status '{status}'. Erlaubt: {', '.join(_STATUS_MAP.keys())}")
+        raise argparse.ArgumentTypeError
+
+
+def parse_priority(priority: str) -> Priority:
+    try:
+        return _PRIORITY_MAP[priority.lower()]
+    except KeyError:
+        render.error(f"Ungültige Priority '{priority}'. Erlaubt: {', '.join(_PRIORITY_MAP.keys())}")
+        raise argparse.ArgumentTypeError

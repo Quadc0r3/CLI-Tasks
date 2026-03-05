@@ -50,6 +50,12 @@ def task_status_changed(task: Task) -> None:
     show_task(task)
 
 
+def show_tasks(tasks: list[Task]) -> None:
+    """Ausgabe aller Tasks."""
+    for task in tasks:
+        show_task(task)
+
+
 def show_task(task: Task) -> None:
     """Ausgabe eines Tasks."""
     prio_color = _priority_color(task.priority)

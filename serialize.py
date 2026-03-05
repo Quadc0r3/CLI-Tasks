@@ -33,7 +33,7 @@ def read() -> tuple[list[Task], dict]:
     if not _DEFAULT_FILE_PATH.exists():
         return _EMPTY_TASK["tasks"], _EMPTY_TASK["meta"]
 
-    with open(_DEFAULT_FILE_PATH, "r") as f:
+    with open(_DEFAULT_FILE_PATH, "r", encoding="utf-8") as f:
         try:
             json_data = json.load(f)
         except json.JSONDecodeError as exc:
@@ -60,7 +60,7 @@ def write(tasks: list[Task], meta: dict) -> None:
 
     json_data = {"meta": meta, "tasks": [t.to_dict() for t in tasks]}
 
-    with open(_DEFAULT_TEMP_PATH, "w") as f:
+    with open(_DEFAULT_TEMP_PATH, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=2)
 
     os.replace(_DEFAULT_TEMP_PATH, _DEFAULT_FILE_PATH)
