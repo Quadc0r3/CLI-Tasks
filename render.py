@@ -22,13 +22,15 @@ _STATUS_COLOR: dict[Status, str] = {
     Status.DONE: _GREEN,
 }
 
+_PRIORITY_COLOR: dict[Priority, str] = {
+    Priority.HIGH: _RED,
+    Priority.MEDIUM: _YELLOW,
+    Priority.LOW: _GREEN,
+}
+
 
 def _priority_color(priority: Priority) -> str:
-    return {
-        Priority.HIGH:   _RED,
-        Priority.MEDIUM: _YELLOW,
-        Priority.LOW:    _GREEN,
-    }[priority]
+    return _PRIORITY_COLOR[priority]
 
 
 def task_created(task: Task) -> None:
@@ -71,6 +73,7 @@ def show_task(task: Task) -> None:
     """Ausgabe eines Tasks."""
     prio_color = _priority_color(task.priority)
     status_color = _STATUS_COLOR[task.status]
+
     print(f"  {_DIM}{'─' * 36}{_RESET}")
     print(f"  {_DIM}ID         {_RESET} {_BOLD}#{task.id}{_RESET}")
     print(f"  {_DIM}Titel      {_RESET} {task.title}")
@@ -84,7 +87,6 @@ def show_task(task: Task) -> None:
 
     if task.updated_at:
         print(f"  {_DIM}Bearbeitet {_RESET} {task.updated_at}")
-
     if task.done_at:
         print(f"  {_DIM}Erledigt   {_RESET} {task.done_at}")
 

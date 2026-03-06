@@ -12,8 +12,14 @@ from models import ALLOWED_TRANSITIONS, Priority, Status, Task
 
 _logger = logging.getLogger(__name__)
 
+
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _find_task(tasks: list[Task], task_id: int) -> Task | None:
+    """Sucht einen Task anhand der ID; gibt None zurück wenn nicht gefunden."""
+    return next((t for t in tasks if t.id == task_id), None)
 
 
 def create(title: str, description: str | None, priority: Priority) -> Task:
@@ -30,17 +36,19 @@ def create(title: str, description: str | None, priority: Priority) -> Task:
         created_at=_now(),
     )
 
-    _logger.info("Task #%d '%s' erstellt (status: %s, priority: %s)", task.id, task.title, task.status.value,
-                 task.priority.value)
     tasks.append(task)
     serialize.write(tasks, meta)
+    _logger.info(
+        "Task #%d '%s' erstellt (status: %s, priority: %s)",
+        task.id, task.title, task.status.value, task.priority.value,
+    )
     return task
 
 
 def edit(title: str, description: str | None, priority: Priority, task_id: int) -> Task:
     """Bearbeitet einen Task und persistiert ihn."""
     tasks, meta = serialize.read()
-    task = next((t for t in tasks if t.id == task_id), None)
+    task = _find_task(tasks, task_id)
 
     if task is None:
         raise ValueError(f"Task #{task_id} nicht gefunden.")
@@ -50,22 +58,25 @@ def edit(title: str, description: str | None, priority: Priority, task_id: int) 
     task.priority = priority
     task.updated_at = _now()
 
-    _logger.info("Task #%d '%s' bearbeitet (status: %s, priority: %s)", task.id, task.title, task.status.value,
-                 task.priority.value)
     serialize.write(tasks, meta)
+    _logger.info(
+        "Task #%d '%s' bearbeitet (status: %s, priority: %s)",
+        task.id, task.title, task.status.value, task.priority.value,
+    )
     return task
 
 
 def get_task(task_id: int) -> Task | None:
     """Gibt einen einzelnen Task anhand der ID zurück, oder None."""
     tasks, _ = serialize.read()
-    task = next((t for t in tasks if t.id == task_id), None)
+    task = _find_task(tasks, task_id)
     if task is None:
         _logger.warning("Task #%d nicht gefunden", task_id)
     return task
 
 
 def get_all_tasks() -> list[Task]:
+    """Gibt alle Tasks zurück."""
     tasks, _ = serialize.read()
     if not tasks:
         _logger.warning("Keine Tasks gefunden")
@@ -75,7 +86,7 @@ def get_all_tasks() -> list[Task]:
 def set_status(task_id: int, target: Status) -> Task:
     """Setzt den Status eines Tasks – nur erlaubte Übergänge gemäß ALLOWED_TRANSITIONS."""
     tasks, meta = serialize.read()
-    task = next((t for t in tasks if t.id == task_id), None)
+    task = _find_task(tasks, task_id)
 
     if task is None:
         _logger.error("Task #%d nicht gefunden", task_id)
@@ -91,15 +102,17 @@ def set_status(task_id: int, target: Status) -> Task:
     task.done_at = _now() if target is Status.DONE else None
     task.updated_at = _now()
 
-    _logger.info("Task #%d Status: %s -> %s", task.id, task.status.value, target.value)
     serialize.write(tasks, meta)
+    _logger.info(
+        "Task #%d Status: %s -> %s", task.id, task.status.value, target.value
+    )
     return task
 
 
 def delete(task_id: int) -> Task:
     """Löscht einen Task anhand der ID. Gibt den gelöschten Task zurück."""
     tasks, meta = serialize.read()
-    task = next((t for t in tasks if t.id == task_id), None)
+    task = _find_task(tasks, task_id)
 
     if task is None:
         _logger.error("Task #%d nicht gefunden", task_id)
@@ -116,7 +129,8 @@ def delete_done() -> int:
     tasks, meta = serialize.read()
     remaining = [t for t in tasks if t.status is not Status.DONE]
     count = len(tasks) - len(remaining)
-    if not tasks:
+
+    if count == 0:
         _logger.warning("Keine erledigten Tasks gefunden")
 
     serialize.write(remaining, meta)

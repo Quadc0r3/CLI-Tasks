@@ -20,9 +20,9 @@ _PRIORITY_HINT = "high / mid / low"
 _STATUS_MAP: dict[str, Status] = {
     "open": Status.OPEN,
     "inprog": Status.IN_PROGRESS,
+    "in_progress": Status.IN_PROGRESS,
     "done": Status.DONE,
     "reopen": Status.OPEN,
-    "in_progress": Status.IN_PROGRESS,
 }
 
 
@@ -69,6 +69,7 @@ def run_create_wizard() -> tuple[str, str | None, Priority]:
 
 
 def run_edit_wizard() -> tuple[str, str | None, Priority]:
+    """Interaktiver Wizard zum Bearbeiten eines Tasks. Gibt (title, description, priority) zurück."""
     print("\n  Task bearbeiten\n")
     return _ask_info()
 
