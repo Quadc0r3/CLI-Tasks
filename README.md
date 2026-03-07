@@ -1,9 +1,9 @@
 # Tasktool - CLI Task Manager
 
-Das Tasktool ist ein rudimentärer Task-Manager komplett in der Kommandozeile. Es ermöglicht es diverse Aufgaben mit
+Das Tasktool ist ein rudimentärer Task-Manager komplett in der Kommandozeile. Es ermöglicht es, diverse Aufgaben mit
 Titel, Beschreibung, und Priorität zu tracken, sowie diese zu bearbeiten, deren Status zu ändern, und zu löschen.
 Gebaut wurde es im Rahmen meiner Bachelorarbeit, in welcher ich den Einfluss von generativer KI in den Software
-Development Lifecycle untersuche. Es wurde von mir und Claude Sonett 4.6 von Anthropic entwickelt.
+Development Lifecycle untersuche. Es wurde von mir und Claude Sonnet 4.6 von Anthropic entwickelt.
 
 ## Quickstart
 
