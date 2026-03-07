@@ -133,16 +133,23 @@ class TestSerialize:
 
         assert (base / "tasks_.json.bak").exists()
 
-    def test_read_invalid_json_returns_empty(self, tmp_path):
+    def test_read_invalid_json_raises(self, tmp_path):
         base = tmp_path / "corrupt"
         serialize.configure(base)
         base.mkdir(parents=True)
         (base / "tasks_.json").write_text("{ kein gültiges json !!!}", encoding="utf-8")
 
-        tasks, meta = serialize.read()
+        with pytest.raises(ValueError, match="beschädigt"):
+            serialize.read()
 
-        assert tasks == []
-        assert meta["last_id"] == 0
+    def test_read_invalid_json_error_mentions_backup(self, tmp_path):
+        base = tmp_path / "corrupt2"
+        serialize.configure(base)
+        base.mkdir(parents=True)
+        (base / "tasks_.json").write_text("!!!!", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="Backup"):
+            serialize.read()
 
     def test_write_stores_correct_json_structure(self, tmp_path):
         base = tmp_path / "structure"
