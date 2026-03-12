@@ -39,7 +39,7 @@ ENV/
 *.zip
 
 # Environment variables
-.env
+code/.env
 .env
 
 # OS
